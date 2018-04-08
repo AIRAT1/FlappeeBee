@@ -7,6 +7,8 @@ import de.android.ayrathairullin.flappeebee.FlappeeBeeGame;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
+		config.height = 320;
+		config.width = 240;
 		new LwjglApplication(new FlappeeBeeGame(), config);
 	}
 }
