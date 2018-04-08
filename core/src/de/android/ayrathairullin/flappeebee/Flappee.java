@@ -18,4 +18,15 @@ public class Flappee {
     public void drawDebug(ShapeRenderer shapeRenderer) {
         shapeRenderer.circle(collisionCircle.x, collisionCircle.y, collisionCircle.radius);
     }
+
+    public void setPosition(float x, float y) {
+        this.x = x;
+        this.y = y;
+        updateCollisionCircle();
+    }
+
+    private void updateCollisionCircle() {
+        collisionCircle.setX(x);
+        collisionCircle.setY(y);
+    }
 }

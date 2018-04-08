@@ -33,6 +33,7 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void show() {
+        flappee.setPosition(WORLD_WIDTH / 4, WORLD_HEIGHT / 2);
         camera = new OrthographicCamera();
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
         camera.update();
