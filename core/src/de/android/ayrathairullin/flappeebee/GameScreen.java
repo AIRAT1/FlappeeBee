@@ -75,7 +75,7 @@ public class GameScreen extends ScreenAdapter {
         update(delta);
         clearScreen();
         draw();
-        drawDebug();
+//        drawDebug(); // TODO disable method
     }
 
     private void update(float delta) {
