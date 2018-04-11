@@ -2,15 +2,16 @@ package de.android.ayrathairullin.flappeebee;
 
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
@@ -19,70 +20,66 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 public class GameScreen extends ScreenAdapter {
     private static final float WORLD_WIDTH = 480;
     private static final float WORLD_HEIGHT = 640;
-    private static final float GAP_BETWEEN_FLOWERS = 200;
 
-    private FlappeeBeeGame game;
+    private static final float GAP_BETWEEN_FLOWERS = 200F;
+
     private ShapeRenderer shapeRenderer;
     private Viewport viewport;
-    private OrthographicCamera camera;
-    private SpriteBatch batch;
-    private Flappee flappee = new Flappee();
-    private Array<Flower> flowers = new Array<Flower>();
-    private int score = 0;
+    private Camera camera;
     private BitmapFont bitmapFont;
     private GlyphLayout glyphLayout;
 
-    public GameScreen(FlappeeBeeGame game) {
-        this.game = game;
-    }
+    private SpriteBatch batch;
+
+    private Flappee flappee;
+
+    private Array<Flower> flowers = new Array<Flower>();
+
+    private int score = 0;
+
+    private Texture background;
+    private Texture flowerBottom;
+    private Texture flowerTop;
+    private Texture flappeeTexture;
 
     @Override
     public void resize(int width, int height) {
+        super.resize(width, height);
         viewport.update(width, height);
     }
 
     @Override
     public void show() {
-        flappee.setPosition(WORLD_WIDTH / 4, WORLD_HEIGHT / 2);
+        super.show();
         camera = new OrthographicCamera();
         camera.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, 0);
         camera.update();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
-        shapeRenderer = new ShapeRenderer();
-        batch = new SpriteBatch();
         bitmapFont = new BitmapFont();
         glyphLayout = new GlyphLayout();
+        shapeRenderer = new ShapeRenderer();
+        batch = new SpriteBatch();
+
+        background = new Texture(Gdx.files.internal("bg.png"));
+        flowerBottom = new Texture(Gdx.files.internal("flowerBottom.png"));
+        flowerTop = new Texture(Gdx.files.internal("flowerTop.png"));
+        flappeeTexture = new Texture(Gdx.files.internal("bee.png"));
+
+        flappee = new Flappee(flappeeTexture);
+        flappee.setPosition(WORLD_WIDTH / 4, WORLD_HEIGHT / 2);
     }
 
     @Override
     public void render(float delta) {
-        clearScreen();
-        batch.setProjectionMatrix(camera.projection);
-        batch.setTransformMatrix(camera.view);
-        batch.begin();
-        batch.end();
-
-        shapeRenderer.setProjectionMatrix(camera.projection);
-        shapeRenderer.setTransformMatrix(camera.view);
-        shapeRenderer.begin(ShapeType.Line);
-        flappee.drawDebug(shapeRenderer);
-        drawDebug();
-        shapeRenderer.end();
-
+        super.render(delta);
         update(delta);
+        clearScreen();
         draw();
-    }
-
-    private void drawDebug() {
-        for (Flower flower : flowers) {
-            flower.drawDebug(shapeRenderer);
-        }
+        drawDebug();
     }
 
     private void update(float delta) {
-        flappee.update();
-        if (Gdx.input.isKeyPressed(Keys.SPACE) || Gdx.input.isTouched()) flappee.flyUp();
-        blockFlappeeLeavingTheWorld();
+        updateFlappee(delta);
         updateFlowers(delta);
         updateScore();
         if (checkForCollision()) {
@@ -96,27 +93,39 @@ public class GameScreen extends ScreenAdapter {
         score = 0;
     }
 
-    private void updateFlowers(float delta) {
+    private boolean checkForCollision() {
         for (Flower flower : flowers) {
-            flower.update(delta);
+            if (flower.isFlappeeColliding(flappee)) {
+                return true;
+            }
         }
-        checkIfNewFlowerIsNeeded();
-        removeFloerIfPassed();
+        return false;
     }
 
-    private void clearScreen() {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+    private void updateFlappee(float delta) {
+        flappee.update(delta);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) || Gdx.input.justTouched()) flappee.flyUp();
+        blockFlappeeLeavingTheWorld();
+    }
+
+    private void updateScore() {
+        Flower flower = flowers.first();
+        if (flower.getX() < flappee.getX() && !flower.isPointClaimed()) {
+            flower.markPointClaimed();
+            score++;
+        }
     }
 
     private void blockFlappeeLeavingTheWorld() {
         flappee.setPosition(flappee.getX(), MathUtils.clamp(flappee.getY(), 0, WORLD_HEIGHT));
     }
 
-    private void createNewFlower() {
-        Flower newFlower = new Flower();
-        newFlower.setPosition(WORLD_WIDTH + Flower.WIDTH);
-        flowers.add(newFlower);
+    private void updateFlowers(float delta) {
+        for (Flower flower : flowers) {
+            flower.update(delta);
+        }
+        checkIfNewFlowerIsNeeded();
+        removeFlowersIfPassed();
     }
 
     private void checkIfNewFlowerIsNeeded() {
@@ -130,7 +139,13 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
-    private void removeFloerIfPassed() {
+    private void createNewFlower() {
+        Flower newFlower = new Flower(flowerBottom, flowerTop);
+        newFlower.setPosition(WORLD_WIDTH + Flower.WIDTH);
+        flowers.add(newFlower);
+    }
+
+    private void removeFlowersIfPassed() {
         if (flowers.size > 0) {
             Flower firstFlower = flowers.first();
             if (firstFlower.getX() < -Flower.WIDTH) {
@@ -139,36 +154,42 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
-    private boolean checkForCollision() {
-        for (Flower flower : flowers) {
-            if (flower.isFlappeeColliding(flappee)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void updateScore() {
-        Flower flower = flowers.first();
-        if (flower.getX() < flappee.getX() && !flower.isPointClaimed()) {
-            flower.markPointClaimed();
-            score ++;
-        }
-    }
-
-    private void drawScore() {
-        String scoreAsString = String.valueOf(score);
-        glyphLayout.setText(bitmapFont, scoreAsString);
-//        bitmapFont.draw(batch, scoreAsString, (viewport.getWorldWidth() - glyphLayout.width / 2), // TODO
-//                viewport.getWorldHeight() * .8f - glyphLayout.height / 2);                        // TODO
-        bitmapFont.draw(batch, scoreAsString, viewport.getWorldWidth() * .95f, viewport.getWorldHeight() * .95f);
+    private void clearScreen() {
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     }
 
     private void draw() {
         batch.setProjectionMatrix(camera.projection);
         batch.setTransformMatrix(camera.view);
         batch.begin();
+        batch.draw(background, 0, 0);
+        drawFlowers();
+        flappee.draw(batch);
         drawScore();
         batch.end();
+    }
+
+    private void drawScore() {
+        String scoreAsString = Integer.toString(score);
+        glyphLayout.setText(bitmapFont, scoreAsString);
+        bitmapFont.draw(batch, scoreAsString, (viewport.getWorldWidth() - glyphLayout.width) / 2, (4 * viewport.getWorldHeight() / 5) - glyphLayout.height / 2);
+    }
+
+    private void drawFlowers() {
+        for (Flower flower : flowers) {
+            flower.draw(batch);
+        }
+    }
+
+    private void drawDebug() {
+        shapeRenderer.setProjectionMatrix(camera.projection);
+        shapeRenderer.setTransformMatrix(camera.view);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        for (Flower flower : flowers) {
+            flower.drawDebug(shapeRenderer);
+        }
+        flappee.drawDebug(shapeRenderer);
+        shapeRenderer.end();
     }
 }
