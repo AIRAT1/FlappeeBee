@@ -23,9 +23,7 @@ public class Flappee {
     private float y = 0;
 
     private float ySpeed = 0;
-
     private float animationTimer = 0;
-
     private final Animation animation;
 
     public Flappee(Texture flappeeTexture) {
@@ -33,7 +31,6 @@ public class Flappee {
 
         animation = new Animation(FRAME_DURATION,flappeeTextures[0][0], flappeeTextures[0][1]);
         animation.setPlayMode(Animation.PlayMode.LOOP);
-
         collisionCircle = new Circle(x, y, COLLISION_RADIUS);
     }
 
