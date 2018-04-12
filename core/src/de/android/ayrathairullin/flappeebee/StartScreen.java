@@ -1,7 +1,6 @@
 package de.android.ayrathairullin.flappeebee;
 
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
@@ -27,9 +26,9 @@ public class StartScreen extends ScreenAdapter{
     private Texture playPressTexture;
     private Texture titleTexture;
 
-    private final Game game;
+    private final FlappeeBeeGame game;
 
-    public StartScreen(Game game) {
+    public StartScreen(FlappeeBeeGame game) {
         this.game = game;
     }
 
@@ -50,7 +49,7 @@ public class StartScreen extends ScreenAdapter{
             @Override
             public void tap(InputEvent event, float x, float y, int count, int button) {
                 super.tap(event, x, y, count, button);
-                game.setScreen(new GameScreen());
+                game.setScreen(new LoadingScreen(game));
                 dispose();
             }
         });

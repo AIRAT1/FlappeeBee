@@ -1,7 +1,6 @@
 package de.android.ayrathairullin.flappeebee;
 
 
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -23,14 +22,17 @@ public class Flappee {
     private float y = 0;
 
     private float ySpeed = 0;
+
     private float animationTimer = 0;
+
     private final Animation animation;
 
-    public Flappee(Texture flappeeTexture) {
+    public Flappee(TextureRegion flappeeTexture) {
         TextureRegion[][] flappeeTextures = new TextureRegion(flappeeTexture).split(TILE_WIDTH, TILE_HEIGHT);
 
         animation = new Animation(FRAME_DURATION,flappeeTextures[0][0], flappeeTextures[0][1]);
         animation.setPlayMode(Animation.PlayMode.LOOP);
+
         collisionCircle = new Circle(x, y, COLLISION_RADIUS);
     }
 
